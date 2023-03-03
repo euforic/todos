@@ -17,33 +17,52 @@ type Comment struct {
 	Username   string `json:"username,omitempty"`
 }
 
-func Search(dir string, ignoreFiles []string, ignoreDirs []string, commentTypes []string) ([]Comment, error) {
+func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
 	// Define regular expression to match the specified comment types
 	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)//\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	comments := []Comment{}
+	ignorePatterns := []string{}
+
+	// Read the contents of the .gitignore file
+	ignoreFilePath := filepath.Join(dir, ".gitignore")
+	ignoreContent, err := os.ReadFile(ignoreFilePath)
+	if err == nil {
+		// Parse the .gitignore file to obtain a list of ignored files and directories
+		ignoreScanner := bufio.NewScanner(strings.NewReader(string(ignoreContent)))
+		for ignoreScanner.Scan() {
+			pattern := ignoreScanner.Text()
+			if !strings.HasPrefix(pattern, "#") && len(pattern) > 0 {
+				ignorePatterns = append(ignorePatterns, pattern)
+			}
+		}
+	}
+
+	// Add the additional ignores to the ignore patterns
+	ignorePatterns = append(ignorePatterns, ignores...)
 
 	// Walk the directory tree and search for comments in each file
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if info == nil {
 			return nil
 		}
 
-		// Ignore files with ignored file extensions
-		for _, ext := range ignoreFiles {
-			if strings.HasSuffix(info.Name(), ext) {
+		// Check if file or directory should be ignored based on patterns from .gitignore and additional ignores
+		for _, pattern := range ignorePatterns {
+			matched, err := filepath.Match(pattern, info.Name())
+			if err != nil {
+				return err
+			}
+			if matched {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 		}
 
-		// Ignore directories with ignored names
 		if info.IsDir() {
-			for _, dir := range ignoreDirs {
-				if info.Name() == dir {
-					return filepath.SkipDir
-				}
-			}
 			return nil
 		}
 

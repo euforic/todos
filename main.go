@@ -15,29 +15,23 @@ import (
 func main() {
 	// Define command line flags
 	dir := flag.String("dir", ".", "Directory to search for comments")
-	ignoreFiles := flag.String("ignore-files", "", "Comma-separated list of file extensions to ignore")
-	ignoreDirs := flag.String("ignore-dirs", "", "Comma-separated list of directory names to ignore")
+	ignores := flag.String("ignore", "", "Comma-separated list of files and directories to ignore")
 	outputJSON := flag.Bool("json", false, "Output results in JSON format")
 	sortBy := flag.String("sortby", "", "Sort results by field")
 	commentTypesStr := flag.String("comment-types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	flag.Parse()
 
-	// Parse the ignore flags into slices of strings
-	var ignoredFiles []string
-	if *ignoreFiles != "" {
-		ignoredFiles = strings.Split(*ignoreFiles, ",")
-	}
-
-	var ignoredDirs []string
-	if *ignoreDirs != "" {
-		ignoredDirs = strings.Split(*ignoreDirs, ",")
+	// Parse the ignore flag into a slice of strings
+	var ignoreList []string
+	if *ignores != "" {
+		ignoreList = strings.Split(*ignores, ",")
 	}
 
 	// Parse the comment types into a slice of strings
 	commentTypes := strings.Split(*commentTypesStr, ",")
 
 	// Search for comments
-	comments, err := todos.Search(*dir, ignoredFiles, ignoredDirs, commentTypes)
+	comments, err := todos.Search(*dir, commentTypes, ignoreList)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)
