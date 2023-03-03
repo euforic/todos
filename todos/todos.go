@@ -19,7 +19,7 @@ type Comment struct {
 
 func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
 	// Define regular expression to match the specified comment types
-	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)//\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
+	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	comments := []Comment{}
