@@ -39,6 +39,20 @@ func TestSearch(t *testing.T) {
 					Text:       "do something",
 					Username:   "",
 				},
+				{
+					FilePath:   "testdata/single-file-match/test.go",
+					LineNumber: 11,
+					Type:       "FIXME",
+					Text:       "do something",
+					Username:   "",
+				},
+				{
+					FilePath:   "testdata/single-file-match/test.go",
+					LineNumber: 14,
+					Type:       "TODO",
+					Text:       "do something",
+					Username:   "user",
+				},
 			},
 			wantErr: false,
 		},
@@ -48,6 +62,20 @@ func TestSearch(t *testing.T) {
 			ignores:     []string{".bin", "node_modules/"},
 			commentType: []string{"TODO", "FIXME"},
 			want: []todos.Comment{
+				{
+					FilePath:   "testdata/multiple-file-matches/file.yml",
+					LineNumber: 17,
+					Type:       "FIXME",
+					Text:       "do something",
+					Username:   "user",
+				},
+				{
+					FilePath:   "testdata/multiple-file-matches/file.yml",
+					LineNumber: 30,
+					Type:       "TODO",
+					Text:       "do something",
+					Username:   "",
+				},
 				{
 					FilePath:   "testdata/multiple-file-matches/file1.go",
 					LineNumber: 5,
@@ -96,8 +124,8 @@ func TestSearch(t *testing.T) {
 			}
 
 			// Convert both 'got' and 'want' to JSON, then compare
-			gotJSON, _ := json.Marshal(got)
-			wantJSON, _ := json.Marshal(tt.want)
+			gotJSON, _ := json.MarshalIndent(got, "", "  ")
+			wantJSON, _ := json.MarshalIndent(tt.want, "", "  ")
 			if !reflect.DeepEqual(gotJSON, wantJSON) {
 				t.Errorf("Search() got = %v, want %v", string(gotJSON), string(wantJSON))
 			}

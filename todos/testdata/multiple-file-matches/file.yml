@@ -1,0 +1,36 @@
+# yaml document beginning
+# comment syntax
+
+# basic syntax - key and value separated by colon and space before the value
+key: value
+
+# Scalar data types
+integerValue: 1 # integer value
+floatingValue: 1 # floating vale
+
+stringValue: "456" # string with double quotes
+stringValue1: "abc" # string with single quotes
+stringValue2: wer # string without quotes
+
+booleanValue:
+  true # boolean values - true or false
+  # FIXME(user): do something
+
+# Collection sequence data types
+# sequence arraylist example
+tester:
+  - One
+  - two
+  - Three
+
+    # another way of sequence  syntax example
+other:
+  [one, two, three]
+
+  # TODO: do something
+config:
+  mysqldatabase:
+    hostname: localhost
+    port: 3012
+    username: root
+    password: root

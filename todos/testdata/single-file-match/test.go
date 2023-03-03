@@ -7,4 +7,9 @@ func main() {
 	y := 2 + 2
 	z := x + y
 	_ = z
+	/*
+		FIXME: do something
+	*/
+
+	// TODO(user): do something
 }
