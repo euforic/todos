@@ -18,7 +18,7 @@ func main() {
 	ignores := flag.String("ignore", "", "Comma-separated list of files and directories to ignore")
 	outputJSON := flag.Bool("json", false, "Output results in JSON format")
 	sortBy := flag.String("sortby", "", "Sort results by field")
-	commentTypesStr := flag.String("comment-types", "TODO,FIXME", "Comma-separated list of comment types to search for")
+	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	flag.Parse()
 
 	// Parse the ignore flag into a slice of strings
