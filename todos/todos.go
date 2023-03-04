@@ -97,6 +97,9 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			}
 		}
 		if err := scanner.Err(); err != nil {
+			if scanner.Err() == bufio.ErrTooLong {
+				return nil
+			}
 			return err
 		}
 
