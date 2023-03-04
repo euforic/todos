@@ -11,6 +11,7 @@ The program accepts the following command-line arguments:
 - `-json`: Outputs the results in JSON format.
 - `-sortby`: Sort results by field (`username`, `file`, `line`, `type`, or `text`)
 - `-comment-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
+- `-hidden`: Search hidden files and directories.
 
 ## Install
 

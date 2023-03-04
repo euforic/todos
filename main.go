@@ -19,6 +19,7 @@ func main() {
 	outputJSON := flag.Bool("json", false, "Output results in JSON format")
 	sortBy := flag.String("sortby", "", "Sort results by field")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
+	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	flag.Parse()
 
 	// Parse the ignore flag into a slice of strings
@@ -26,6 +27,19 @@ func main() {
 	if *ignores != "" {
 		ignoreList = strings.Split(*ignores, ",")
 	}
+
+	// Add the hidden files and directories ignore
+	if !*searchHidden {
+		ignoreList = append(ignoreList, ".*")
+	}
+
+	ignorePatterns, err := todos.ParseGitignore(*dir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	ignoreList = append(ignoreList, ignorePatterns...)
 
 	// Parse the comment types into a slice of strings
 	commentTypes := strings.Split(*commentTypesStr, ",")
@@ -37,6 +51,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Sort the comments
 	sort.Slice(comments, func(i, j int) bool {
 		switch *sortBy {
 		case "username":

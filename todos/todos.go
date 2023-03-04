@@ -18,38 +18,44 @@ type Comment struct {
 }
 
 func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
+	// FIXME: For some reason the hidden files and folder ignore pattern is not working
+	searchHidden := true
+	for i, ignore := range ignores {
+		// remove hidden files and directories regex
+		if ignore == ".*" {
+			searchHidden = false
+			// remove the hidden files and directories regex from the ignores
+			ignores = append(ignores[:i], ignores[i+1:]...)
+		}
+	}
+
 	// Define regular expression to match the specified comment types
 	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	comments := []Comment{}
-	ignorePatterns := []string{}
-
-	// Read the contents of the .gitignore file
-	ignoreFilePath := filepath.Join(dir, ".gitignore")
-	ignoreContent, err := os.ReadFile(ignoreFilePath)
-	if err == nil {
-		// Parse the .gitignore file to obtain a list of ignored files and directories
-		ignoreScanner := bufio.NewScanner(strings.NewReader(string(ignoreContent)))
-		for ignoreScanner.Scan() {
-			pattern := ignoreScanner.Text()
-			if !strings.HasPrefix(pattern, "#") && len(pattern) > 0 {
-				ignorePatterns = append(ignorePatterns, pattern)
-			}
-		}
-	}
-
-	// Add the additional ignores to the ignore patterns
-	ignorePatterns = append(ignorePatterns, ignores...)
 
 	// Walk the directory tree and search for comments in each file
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if info == nil {
 			return nil
 		}
 
+		// FIXME: For some reason the hidden files and folder ignore pattern is not working
+		if info.IsDir() {
+			if !searchHidden && strings.HasPrefix(info.Name(), ".") && info.Name() != "." {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+		// Ignore hidden files
+		if !searchHidden && strings.HasPrefix(info.Name(), ".") {
+			return nil
+		}
+
 		// Check if file or directory should be ignored based on patterns from .gitignore and additional ignores
-		for _, pattern := range ignorePatterns {
+		for _, pattern := range ignores {
 			matched, err := filepath.Match(pattern, info.Name())
 			if err != nil {
 				return err
@@ -60,10 +66,6 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 				}
 				return nil
 			}
-		}
-
-		if info.IsDir() {
-			return nil
 		}
 
 		// Open the file and search for comments
@@ -106,4 +108,38 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 	}
 
 	return comments, nil
+}
+
+// Parses the .gitignore file in the specified directory and returns a slice of
+// patterns to ignore.
+func ParseGitignore(dir string) ([]string, error) {
+	// Open the .gitignore file
+	file, err := os.Open(filepath.Join(dir, ".gitignore"))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// Create a slice to hold the patterns
+	patterns := []string{}
+
+	// Read the patterns from the .gitignore file
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Ignore comments
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		// Ignore blank lines
+		if line == "" {
+			continue
+		}
+		patterns = append(patterns, line)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return patterns, nil
 }
