@@ -34,7 +34,7 @@ func main() {
 	}
 
 	ignorePatterns, err := todos.ParseGitignore(*dir)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)
 	}
