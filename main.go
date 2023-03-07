@@ -20,6 +20,7 @@ func main() {
 	sortBy := flag.String("sortby", "", "Sort results by field")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
+	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
 	flag.Parse()
 
 	// Parse the ignore flag into a slice of strings
@@ -48,6 +49,12 @@ func main() {
 	comments, err := todos.Search(*dir, commentTypes, ignoreList)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	// Validate the max number of comments
+	if *validateMax > 0 && len(comments) > *validateMax {
+		fmt.Fprintf(os.Stderr, "Error: %d comments found, max is %d", len(comments), *validateMax)
 		os.Exit(1)
 	}
 

@@ -12,6 +12,7 @@ The program accepts the following command-line arguments:
 - `-sortby`: Sort results by field (`username`, `file`, `line`, `type`, or `text`)
 - `-comment-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
 - `-hidden`: Search hidden files and directories.
+- `-validate-max`: Validate that the number of comments is less than or equal to the max.
 
 ## Install
 
@@ -73,4 +74,12 @@ To search for different types of comments, use the `-comment-types` flag followe
 
 ```bash
 todos -comment-types=TODO,FIXME,NOTE
+```
+
+### Validate Max
+
+To validate the maximum amount of comments does not exceed a certin value, use the `-validate-max` flag followed by the maximium number of comments. For example, to limit the maximum amount of comments to `20`, run the following command:
+
+```bash
+todos -validate-max 20
 ```
