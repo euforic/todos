@@ -56,6 +56,14 @@ func TestSearch(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:        "SingleFileIgnoreNoMatches",
+			dir:         ".",
+			ignores:     []string{".bin", "testdata/*", "*.go"},
+			commentType: []string{"TODO", "FIXME"},
+			want:        []todos.Comment{},
+			wantErr:     false,
+		},
+		{
 			name:        "SingleFileMatch",
 			dir:         "testdata/single-file-match",
 			ignores:     []string{".bin", "node_modules/"},
