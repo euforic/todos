@@ -8,7 +8,7 @@ The program accepts the following command-line arguments:
 
 - `-dir`: Specifies the directory to search for comments. Defaults to the current directory.
 - `-ignore`: A comma-separated list of files and directories to ignore, in gitignore format.
-- `-sortby`: Sort results by field (`username`, `file`, `line`, `type`, or `text`)
+- `-sortby`: Sort results by field (`author`, `file`, `line`, `type`, or `text`)
 - `-output`: Output style (table, file, json). Default: table
 - `-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
 - `-hidden`: Search hidden files and directories.
@@ -33,7 +33,7 @@ todos
 You can also pass command-line arguments to the program. For example, to search for comments in the directory "myproject" and output the results in JSON format, run the following command:
 
 ```bash
-todos -dir=myproject -json
+todos -dir=myproject -output json
 ```
 
 ### Search a Specific Directory
@@ -62,7 +62,7 @@ todos -output json
 
 ### Sort Results
 
-To sort the results, use the `-sortby` flag followed by the field to sort by. The valid fields are `username`, `file`, `line`, `type`, and `text`. For example, to sort the results by comment type, run the following command:
+To sort the results, use the `-sortby` flag followed by the field to sort by. The valid fields are `author`, `file`, `line`, `type`, and `text`. For example, to sort the results by comment type, run the following command:
 
 ```bash
 todos -sortby=type
