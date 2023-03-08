@@ -29,9 +29,6 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 		}
 	}
 
-	// Define regular expression to match the specified comment types
-	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
-
 	// Create a slice to hold the comments
 	comments := []Comment{}
 
@@ -68,40 +65,14 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			}
 		}
 
-		// Open the file and search for comments
-		file, outErr := os.Open(path)
-		if outErr != nil {
-			// Ignore directories that can't be opened
-			if os.IsPermission(err) || os.IsNotExist(err) {
-				return nil
-			}
-			return err
+		// Parse the file and search for comments
+		fileComments, parseErr := ParseFile(path, commentTypes)
+		if parseErr != nil {
+			return parseErr
 		}
-		defer file.Close()
 
-		scanner := bufio.NewScanner(file)
-		for i := 1; scanner.Scan(); i++ {
-			line := scanner.Text()
-			if matches := commentRegex.FindStringSubmatch(line); matches != nil {
-				commentType := strings.ToUpper(matches[1])
-				author := matches[2]
-				commentText := strings.TrimSpace(matches[3])
-				comment := Comment{
-					FilePath: path,
-					Line:     i,
-					Type:     commentType,
-					Text:     commentText,
-					Author:   author,
-				}
-				comments = append(comments, comment)
-			}
-		}
-		if err := scanner.Err(); err != nil {
-			if scanner.Err() == bufio.ErrTooLong {
-				return nil
-			}
-			return err
-		}
+		// Add the comments to the slice
+		comments = append(comments, fileComments...)
 
 		return nil
 	})
@@ -110,6 +81,51 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 		return nil, err
 	}
 
+	return comments, nil
+}
+
+// ParseFile parses the specified file and returns a slice of comments.
+func ParseFile(path string, commentTypes []string) ([]Comment, error) {
+	// Define regular expression to match the specified comment types
+	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
+
+	// Create a slice to hold the comments
+	var comments []Comment
+
+	// Open the file and search for comments
+	file, err := os.Open(path)
+	if err != nil {
+		// Ignore directories that can't be opened
+		if os.IsPermission(err) || os.IsNotExist(err) {
+			return comments, nil
+		}
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for i := 1; scanner.Scan(); i++ {
+		line := scanner.Text()
+		if matches := commentRegex.FindStringSubmatch(line); matches != nil {
+			commentType := strings.ToUpper(matches[1])
+			author := matches[2]
+			commentText := strings.TrimSpace(matches[3])
+			comment := Comment{
+				FilePath: path,
+				Line:     i,
+				Type:     commentType,
+				Text:     commentText,
+				Author:   author,
+			}
+			comments = append(comments, comment)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		if scanner.Err() == bufio.ErrTooLong {
+			return nil, fmt.Errorf("line too long in %s", path)
+		}
+		return nil, err
+	}
 	return comments, nil
 }
 
