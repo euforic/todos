@@ -4,6 +4,10 @@ This is a command-line program written in Go that searches for `// TODO: xxxx` s
 
 ## Usage
 
+```bash
+todos [options] <dir>
+```
+
 The program accepts the following command-line arguments:
 
 - `-ignore`: A comma-separated list of files and directories to ignore, in gitignore format.
@@ -65,6 +69,12 @@ To sort the results, use the `-sortby` flag followed by the field to sort by. Th
 
 ```bash
 todos -sortby type
+```
+
+To sort in descending order add the postfix `:desc`. For example to sort by author in decending order, you would run the following command:
+
+```bash
+todos -sortby author:desc
 ```
 
 ### Search for Different Comment Types

@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/euforic/todos/todos"
 )
@@ -15,11 +12,11 @@ import (
 func main() {
 	// Define command line flags
 	ignores := flag.String("ignore", "", "Comma-separated list of files and directories to ignore")
-	sortBy := flag.String("sortby", "", "Sort results by field (author, file, line, type, text)")
+	sortBy := flag.String("sortby", "", "Sort results by field (author, file, line, type, text) to sort descending, postfix with ':desc' (e.g. author:desc)")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
-	outputStyle := flag.String("output", "file", "Output style (table, file, json)")
+	outputStyle := flag.String("output", "file", "Output style (table, group, json, md)")
 	flag.Parse()
 
 	dir := flag.Arg(0)
@@ -62,107 +59,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Sort the comments
-	if *sortBy == "" && *outputStyle != "file" {
-		sort.Slice(comments, func(i, j int) bool {
-			switch *sortBy {
-			case "author":
-				return comments[i].Author < comments[j].Author
-			case "file":
-				return comments[i].FilePath < comments[j].FilePath
-			case "line":
-				return comments[i].Line < comments[j].Line
-			case "type":
-				return comments[i].Type < comments[j].Type
-			case "text":
-				return comments[i].Text < comments[j].Text
-			default:
-				return comments[i].FilePath < comments[j].FilePath
-			}
-		})
+	var sortDesc bool
+
+	sortbyParts := strings.Split(*sortBy, ":")
+	*sortBy = sortbyParts[0]
+
+	if len(sortbyParts) > 1 && sortbyParts[1] == "desc" {
+		sortDesc = true
 	}
 
 	// Output the comments
+	var outputErr error
 	switch *outputStyle {
 	case "table":
-		outputTable(comments)
-	case "file":
-		outputFile(comments, *sortBy)
+		outputErr = todos.WriteTable(os.Stdout, comments, *sortBy, sortDesc)
+	case "group":
+		outputErr = todos.WriteFileGroup(os.Stdout, comments, *sortBy, sortDesc)
 	case "json":
-		outputJSON(comments)
+		outputErr = todos.WriteJSON(os.Stdout, comments, *sortBy, sortDesc)
+	case "md":
+		outputErr = todos.WriteMarkdown(os.Stdout, comments, *sortBy, sortDesc)
 	default:
-		outputTable(comments)
+		outputErr = todos.WriteTable(os.Stdout, comments, *sortBy, sortDesc)
 	}
-}
 
-// outputFile outputs the comments in a file format
-func outputFile(comments []todos.Comment, sortby string) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-
-	output := make(map[string][]todos.Comment)
-	for _, comment := range comments {
-		output[comment.FilePath] = append(output[comment.FilePath], comment)
-	}
-	keys := make([]string, 0, len(output))
-	sort.Strings(keys)
-
-	for file, comments := range output {
-		fmt.Fprintf(w, "%s [%d Comments]:\n", file, len(comments))
-		if sortby != "" {
-			sort.Slice(comments, func(i, j int) bool {
-				switch sortby {
-				case "author":
-					return comments[i].Author < comments[j].Author
-				case "file":
-					return comments[i].FilePath < comments[j].FilePath
-				case "line":
-					return comments[i].Line < comments[j].Line
-				case "type":
-					return comments[i].Type < comments[j].Type
-				case "text":
-					return comments[i].Text < comments[j].Text
-				default:
-					return comments[i].FilePath < comments[j].FilePath
-				}
-			})
-		}
-
-		for i, comment := range comments {
-			author := ""
-			if comment.Author != "" {
-				author = "(" + comment.Author + ")"
-			}
-
-			fmt.Fprintf(w, "%d\t|\t%s%s:\t%s\t\n", comment.Line, comment.Type, author, comment.Text)
-			if i == len(comments)-1 {
-				fmt.Fprintf(w, "\n")
-			}
-		}
-	}
-	w.Flush()
-}
-
-// outputJSON outputs the comments in JSON format
-func outputJSON(comments []todos.Comment) {
-	commentsJSON, err := json.MarshalIndent(comments, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+	if outputErr != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", outputErr.Error())
 		os.Exit(1)
 	}
-	fmt.Println(string(commentsJSON))
-}
-
-// outputTable outputs the comments in a tabular format
-func outputTable(comments []todos.Comment) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-
-	for _, comment := range comments {
-		username := "unknown"
-		if comment.Author != "" {
-			username = comment.Author
-		}
-		commentString := fmt.Sprintf("%s\t%s\t%s:%d\t%s", username, comment.Type, comment.FilePath, comment.Line, comment.Text)
-		fmt.Fprintln(w, commentString)
-	}
-	w.Flush()
 }
