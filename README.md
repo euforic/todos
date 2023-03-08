@@ -6,7 +6,6 @@ This is a command-line program written in Go that searches for `// TODO: xxxx` s
 
 The program accepts the following command-line arguments:
 
-- `-dir`: Specifies the directory to search for comments. Defaults to the current directory.
 - `-ignore`: A comma-separated list of files and directories to ignore, in gitignore format.
 - `-sortby`: Sort results by field (`author`, `file`, `line`, `type`, or `text`)
 - `-output`: Output style (table, file, json). Default: table
