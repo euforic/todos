@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/euforic/todos/pkg/gitignore"
 )
 
 type Comment struct {
@@ -53,18 +55,17 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 
 		// Check if file or directory should be ignored based on patterns from .gitignore and additional ignores
 		for _, pattern := range ignores {
-			// QUESTION: Do we really need to match the path and the name?
-			matched, err := filepath.Match(pattern, path)
+			matched, err := gitignore.Match(pattern, path)
 			if err != nil {
 				return err
 			}
 
-			matchedName, err := filepath.Match(pattern, info.Name())
+			matchedPath, err := filepath.Match(pattern, info.Name())
 			if err != nil {
 				return err
 			}
 
-			if matched || matchedName {
+			if matched || matchedPath {
 				if info.IsDir() {
 					return filepath.SkipDir
 				}
