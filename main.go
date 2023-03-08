@@ -15,7 +15,7 @@ import (
 func main() {
 	// Define command line flags
 	ignores := flag.String("ignore", "", "Comma-separated list of files and directories to ignore")
-	sortBy := flag.String("sortby", "", "Sort results by field")
+	sortBy := flag.String("sortby", "", "Sort results by field (author, file, line, type, text)")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
@@ -63,10 +63,10 @@ func main() {
 	}
 
 	// Sort the comments
-	if *sortBy == "" {
+	if *sortBy == "" && *outputStyle != "file" {
 		sort.Slice(comments, func(i, j int) bool {
 			switch *sortBy {
-			case "username":
+			case "author":
 				return comments[i].Author < comments[j].Author
 			case "file":
 				return comments[i].FilePath < comments[j].FilePath
@@ -87,7 +87,7 @@ func main() {
 	case "table":
 		outputTable(comments)
 	case "file":
-		outputFile(comments)
+		outputFile(comments, *sortBy)
 	case "json":
 		outputJSON(comments)
 	default:
@@ -96,16 +96,37 @@ func main() {
 }
 
 // outputFile outputs the comments in a file format
-func outputFile(comments []todos.Comment) {
+func outputFile(comments []todos.Comment, sortby string) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	output := make(map[string][]todos.Comment)
 	for _, comment := range comments {
 		output[comment.FilePath] = append(output[comment.FilePath], comment)
 	}
+	keys := make([]string, 0, len(output))
+	sort.Strings(keys)
 
 	for file, comments := range output {
 		fmt.Fprintf(w, "%s [%d Comments]:\n", file, len(comments))
+		if sortby != "" {
+			sort.Slice(comments, func(i, j int) bool {
+				switch sortby {
+				case "author":
+					return comments[i].Author < comments[j].Author
+				case "file":
+					return comments[i].FilePath < comments[j].FilePath
+				case "line":
+					return comments[i].Line < comments[j].Line
+				case "type":
+					return comments[i].Type < comments[j].Type
+				case "text":
+					return comments[i].Text < comments[j].Text
+				default:
+					return comments[i].FilePath < comments[j].FilePath
+				}
+			})
+		}
+
 		for i, comment := range comments {
 			author := ""
 			if comment.Author != "" {
