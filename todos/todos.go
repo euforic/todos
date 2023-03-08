@@ -53,12 +53,18 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 
 		// Check if file or directory should be ignored based on patterns from .gitignore and additional ignores
 		for _, pattern := range ignores {
+			// QUESTION: Do we really need to match the path and the name?
 			matched, err := filepath.Match(pattern, path)
 			if err != nil {
 				return err
 			}
 
-			if matched {
+			matchedName, err := filepath.Match(pattern, info.Name())
+			if err != nil {
+				return err
+			}
+
+			if matched || matchedName {
 				if info.IsDir() {
 					return filepath.SkipDir
 				}
