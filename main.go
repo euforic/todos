@@ -14,7 +14,6 @@ import (
 
 func main() {
 	// Define command line flags
-	dir := flag.String("dir", ".", "Directory to search for comments")
 	ignores := flag.String("ignore", "", "Comma-separated list of files and directories to ignore")
 	sortBy := flag.String("sortby", "", "Sort results by field")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
@@ -22,6 +21,11 @@ func main() {
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
 	outputStyle := flag.String("output", "file", "Output style (table, file, json)")
 	flag.Parse()
+
+	dir := flag.Arg(0)
+	if dir == "" {
+		dir = "."
+	}
 
 	// Parse the ignore flag into a slice of strings
 	var ignoreList []string
@@ -34,7 +38,7 @@ func main() {
 		ignoreList = append(ignoreList, ".*")
 	}
 
-	ignorePatterns, err := todos.ParseGitignore(*dir)
+	ignorePatterns, err := todos.ParseGitignore(dir)
 	if err != nil && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)
@@ -46,7 +50,7 @@ func main() {
 	commentTypes := strings.Split(*commentTypesStr, ",")
 
 	// Search for comments
-	comments, err := todos.Search(*dir, commentTypes, ignoreList)
+	comments, err := todos.Search(dir, commentTypes, ignoreList)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)

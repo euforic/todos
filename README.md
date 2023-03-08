@@ -33,15 +33,15 @@ todos
 You can also pass command-line arguments to the program. For example, to search for comments in the directory "myproject" and output the results in JSON format, run the following command:
 
 ```bash
-todos -dir=myproject -output json
+todos -output json ./myproject
 ```
 
 ### Search a Specific Directory
 
-To search a specific directory, use the `-dir` flag followed by the directory path. For example, to search the directory `~/projects/myproject`, run the following command:
+To search a specific directory, use `todos [options] <dir>` the first arg is the directory path. For example, to search the directory `~/projects/myproject`, run the following command:
 
 ```bash
-todos -dir=~/projects/myproject
+todos ~/projects/myproject
 ```
 
 ### Ignore Files and Directories
@@ -49,7 +49,7 @@ todos -dir=~/projects/myproject
 To ignore files and directories, use the `-ignore` flag followed by a comma-separated list of files and directories in gitignore format. For example, to ignore files with the extensions `.txt` and `.log`, and directories named `vendor` and `node_modules`, run the following command:
 
 ```bash
-todos -ignore="*.txt,*.log,vendor/,node_modules/"
+todos -ignore "*.txt,*.log,vendor/,node_modules/"
 ```
 
 ### Output in Format Style
@@ -65,7 +65,7 @@ todos -output json
 To sort the results, use the `-sortby` flag followed by the field to sort by. The valid fields are `author`, `file`, `line`, `type`, and `text`. For example, to sort the results by comment type, run the following command:
 
 ```bash
-todos -sortby=type
+todos -sortby type
 ```
 
 ### Search for Different Comment Types
