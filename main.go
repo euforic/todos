@@ -16,7 +16,7 @@ func main() {
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
-	outputStyle := flag.String("output", "file", "Output style (table, group, json, md)")
+	outputStyle := flag.String("output", "group", "Output style (table, group, json, md)")
 	flag.Parse()
 
 	dir := flag.Arg(0)
