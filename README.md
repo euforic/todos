@@ -8,9 +8,9 @@ The program accepts the following command-line arguments:
 
 - `-dir`: Specifies the directory to search for comments. Defaults to the current directory.
 - `-ignore`: A comma-separated list of files and directories to ignore, in gitignore format.
-- `-json`: Outputs the results in JSON format.
 - `-sortby`: Sort results by field (`username`, `file`, `line`, `type`, or `text`)
-- `-comment-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
+- `-output`: Output style (table, file, json). Default: table
+- `-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
 - `-hidden`: Search hidden files and directories.
 - `-validate-max`: Validate that the number of comments is less than or equal to the max.
 
@@ -52,12 +52,12 @@ To ignore files and directories, use the `-ignore` flag followed by a comma-sepa
 todos -ignore="*.txt,*.log,vendor/,node_modules/"
 ```
 
-### Output in JSON Format
+### Output in Format Style
 
-To output the results in JSON format, use the `-json` flag. For example, to output the results in JSON format, run the following command:
+To output the results in the chosen format (json, file, table), use the `-output` flag. For example, to output the results in json format, run the following command:
 
 ```bash
-todos -json
+todos -output json
 ```
 
 ### Sort Results
@@ -70,10 +70,10 @@ todos -sortby=type
 
 ### Search for Different Comment Types
 
-To search for different types of comments, use the `-comment-types` flag followed by a comma-separated list of comment types. For example, to search for comments with the types `TODO`, `FIXME`, and `NOTE`, run the following command:
+To search for different types of comments, use the `-types` flag followed by a comma-separated list of comment types. For example, to search for comments with the types `TODO`, `FIXME`, and `NOTE`, run the following command:
 
 ```bash
-todos -comment-types=TODO,FIXME,NOTE
+todos -types=TODO,FIXME,NOTE
 ```
 
 ### Validate Max

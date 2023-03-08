@@ -10,11 +10,11 @@ import (
 )
 
 type Comment struct {
-	FilePath   string `json:"filePath"`
-	LineNumber int    `json:"lineNumber"`
-	Type       string `json:"type"`
-	Text       string `json:"text"`
-	Username   string `json:"username,omitempty"`
+	FilePath string `json:"filePath"`
+	Line     int    `json:"line"`
+	Type     string `json:"type"`
+	Text     string `json:"text"`
+	Author   string `json:"author"`
 }
 
 func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
@@ -84,14 +84,14 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			line := scanner.Text()
 			if matches := commentRegex.FindStringSubmatch(line); matches != nil {
 				commentType := strings.ToUpper(matches[1])
-				username := matches[2]
+				author := matches[2]
 				commentText := strings.TrimSpace(matches[3])
 				comment := Comment{
-					FilePath:   path,
-					LineNumber: i,
-					Type:       commentType,
-					Text:       commentText,
-					Username:   username,
+					FilePath: path,
+					Line:     i,
+					Type:     commentType,
+					Text:     commentText,
+					Author:   author,
 				}
 				comments = append(comments, comment)
 			}
