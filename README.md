@@ -1,5 +1,10 @@
 # Todos
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/euforic/todos)](https://goreportcard.com/report/github.com/euforic/todos)
+[![Go Reference](https://pkg.go.dev/badge/github.com/euforic/todos/todos.svg)](https://pkg.go.dev/github.com/euforic/todos/todos)
+[![ci-badger-tests](https://github.com/euforic/todos/actions/workflows/lint.yml/badge.svg)](https://github.com/euforic/todos/actions/workflows/lint.yml)
+[![Sourcegraph](https://sourcegraph.com/github.com/euforic/todos/-/badge.svg)](https://sourcegraph.com/github.com/euforic/todos?badge)
+
 This is a command-line program written in Go that searches for `// TODO: xxxx` style comments in a directory and outputs them to the console or in JSON format.
 
 ## Usage
