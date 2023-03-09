@@ -3,6 +3,7 @@ package todos
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -42,7 +43,18 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			return nil
 		}
 
-		fileComments, parseErr := ParseFile(path, commentTypes)
+		// Open the file and search for comments
+		file, openErr := os.Open(path)
+		if openErr != nil {
+			// Ignore directories that can't be opened
+			if os.IsPermission(openErr) || os.IsNotExist(openErr) {
+				return nil
+			}
+			return openErr
+		}
+		defer file.Close()
+
+		fileComments, parseErr := Parse(file, path, commentTypes)
 		if parseErr != nil {
 			return parseErr
 		}
@@ -95,26 +107,15 @@ func shouldIgnoreFile(info os.FileInfo, ignores []string, path string, searchHid
 	return false
 }
 
-// ParseFile parses the specified file and returns a slice of comments.
-func ParseFile(path string, commentTypes []string) ([]Comment, error) {
+// Parse parses the specified file and returns a slice of comments.
+func Parse(r io.Reader, path string, commentTypes []string) ([]Comment, error) {
 	// Define regular expression to match the specified comment types
 	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	var comments []Comment
 
-	// Open the file and search for comments
-	file, err := os.Open(path)
-	if err != nil {
-		// Ignore directories that can't be opened
-		if os.IsPermission(err) || os.IsNotExist(err) {
-			return comments, nil
-		}
-		return nil, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(r)
 	for i := 1; scanner.Scan(); i++ {
 		line := scanner.Text()
 		if matches := commentRegex.FindStringSubmatch(line); matches != nil {
