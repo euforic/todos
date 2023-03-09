@@ -129,10 +129,10 @@ func ParseFile(path string, commentTypes []string) ([]Comment, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		if scanner.Err() == bufio.ErrTooLong {
-			return nil, fmt.Errorf("line too long in %s", path)
+		// Ignore lines that are too long
+		if scanner.Err() != bufio.ErrTooLong {
+			return nil, err
 		}
-		return nil, err
 	}
 	return comments, nil
 }
