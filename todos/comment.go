@@ -99,13 +99,15 @@ func WriteTable(w io.Writer, comments []Comment, sortby string, desc bool) error
 	sortComments(comments, sortby, desc)
 
 	tabW := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	header := fmt.Sprintf("%s\t%s\t%s\t%s", "Type", "Author", "File:Line", "Text")
+	fmt.Fprintln(tabW, header)
 
 	for _, comment := range comments {
 		commentString := fmt.Sprintf("%s\t%s\t%s:%d\t%s", comment.Author, comment.Type, comment.File, comment.Line, comment.Text)
 		fmt.Fprintln(tabW, commentString)
 	}
 
-	return nil
+	return tabW.Flush()
 }
 
 // WriteMarkdown writes the comments to the io.Writer as a markdown table

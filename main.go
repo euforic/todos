@@ -16,7 +16,7 @@ func main() {
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
-	outputStyle := flag.String("output", "group", "Output style (table, group, json, md)")
+	outputStyle := flag.String("output", "table", "Output style (table, group, json, md)")
 	format := flag.String("format", "", "Go template string to use for output style (-output will be ignored if format is set)")
 	flag.Parse()
 
@@ -25,13 +25,37 @@ func main() {
 		dir = "."
 	}
 
-	// Parse the ignore flag into a slice of strings
-	var ignoreList []string
+	ignoreList := parseIgnoreList(ignores, searchHidden, dir)
+
+	commentTypes := strings.Split(*commentTypesStr, ",")
+
+	comments, err := todos.Search(dir, commentTypes, ignoreList)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	validateCommentsCount(*validateMax, comments)
+
+	sortField, sortDesc := parseSortBy(*sortBy)
+
+	formatStr := ""
+	if *format != "" {
+		*outputStyle = "format"
+		formatStr = *format
+	}
+
+	outputComments(*outputStyle, comments, sortField, sortDesc, formatStr)
+}
+
+// parseIgnoreList parses the ignore list from the command line
+func parseIgnoreList(ignores *string, searchHidden *bool, dir string) []string {
+	ignoreList := []string{}
+
 	if *ignores != "" {
 		ignoreList = strings.Split(*ignores, ",")
 	}
 
-	// Add the hidden files and directories ignore
 	if !*searchHidden {
 		ignoreList = append(ignoreList, ".*")
 	}
@@ -43,51 +67,50 @@ func main() {
 	}
 
 	ignoreList = append(ignoreList, ignorePatterns...)
+	return ignoreList
+}
 
-	// Parse the comment types into a slice of strings
-	commentTypes := strings.Split(*commentTypesStr, ",")
-
-	// Search for comments
-	comments, err := todos.Search(dir, commentTypes, ignoreList)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+// validateCommentsCount validates that the number of comments is less than or equal to the max
+func validateCommentsCount(validateMax int, comments []todos.Comment) {
+	if validateMax > 0 && len(comments) > validateMax {
+		fmt.Fprintf(os.Stderr, "Error: %d comments found, max is %d", len(comments), validateMax)
 		os.Exit(1)
 	}
+}
 
-	// Validate the max number of comments
-	if *validateMax > 0 && len(comments) > *validateMax {
-		fmt.Fprintf(os.Stderr, "Error: %d comments found, max is %d", len(comments), *validateMax)
-		os.Exit(1)
+// parseSortBy parses the sortby flag from the command line
+func parseSortBy(sortBy string) (string, bool) {
+	sortField := ""
+	sortDesc := false
+
+	sortbyParts := strings.Split(sortBy, ":")
+	if len(sortbyParts) > 0 {
+		sortField = sortbyParts[0]
 	}
-
-	var sortDesc bool
-
-	sortbyParts := strings.Split(*sortBy, ":")
-	*sortBy = sortbyParts[0]
 
 	if len(sortbyParts) > 1 && sortbyParts[1] == "desc" {
 		sortDesc = true
 	}
 
-	if *format != "" {
-		*outputStyle = "format"
-	}
+	return sortField, sortDesc
+}
 
-	// Output the comments
+// outputComments outputs the comments in the specified format
+func outputComments(outputStyle string, comments []todos.Comment, sortField string, sortDesc bool, formatStr string) {
 	var outputErr error
-	switch *outputStyle {
+	switch outputStyle {
 	case "table":
-		outputErr = todos.WriteTable(os.Stdout, comments, *sortBy, sortDesc)
+		outputErr = todos.WriteTable(os.Stdout, comments, sortField, sortDesc)
 	case "group":
-		outputErr = todos.WriteFileGroup(os.Stdout, comments, *sortBy, sortDesc)
+		outputErr = todos.WriteFileGroup(os.Stdout, comments, sortField, sortDesc)
 	case "json":
-		outputErr = todos.WriteJSON(os.Stdout, comments, *sortBy, sortDesc)
+		outputErr = todos.WriteJSON(os.Stdout, comments, sortField, sortDesc)
 	case "md":
-		outputErr = todos.WriteMarkdown(os.Stdout, comments, *sortBy, sortDesc)
+		outputErr = todos.WriteMarkdown(os.Stdout, comments, sortField, sortDesc)
 	case "format":
-		outputErr = todos.WriteTemplate(os.Stdout, comments, *sortBy, sortDesc, *format)
+		outputErr = todos.WriteTemplate(os.Stdout, comments, sortField, sortDesc, formatStr)
 	default:
-		outputErr = todos.WriteTable(os.Stdout, comments, *sortBy, sortDesc)
+		outputErr = todos.WriteTable(os.Stdout, comments, sortField, sortDesc)
 	}
 
 	if outputErr != nil {
