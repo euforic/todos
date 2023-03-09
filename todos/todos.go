@@ -12,11 +12,11 @@ import (
 )
 
 type Comment struct {
-	FilePath string `json:"filePath"`
-	Line     int    `json:"line"`
-	Type     string `json:"type"`
-	Text     string `json:"text"`
-	Author   string `json:"author"`
+	File   string `json:"file"`
+	Line   int    `json:"line"`
+	Type   string `json:"type"`
+	Text   string `json:"text"`
+	Author string `json:"author"`
 }
 
 func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
@@ -119,11 +119,11 @@ func ParseFile(path string, commentTypes []string) ([]Comment, error) {
 			author := matches[2]
 			commentText := strings.TrimSpace(matches[3])
 			comment := Comment{
-				FilePath: path,
-				Line:     i,
-				Type:     commentType,
-				Text:     commentText,
-				Author:   author,
+				File:   path,
+				Line:   i,
+				Type:   commentType,
+				Text:   commentText,
+				Author: author,
 			}
 			comments = append(comments, comment)
 		}

@@ -15,6 +15,7 @@ The program accepts the following command-line arguments:
 - `-output`: Output style (table, file, json). Default: table
 - `-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
 - `-hidden`: Search hidden files and directories.
+- `-format`: Uses the provide go template to output the result
 - `-validate-max`: Validate that the number of comments is less than or equal to the max.
 
 ## Install
@@ -83,6 +84,20 @@ To search for different types of comments, use the `-types` flag followed by a c
 
 ```bash
 todos -types=TODO,FIXME,NOTE
+```
+
+### Format
+
+To format the output of the comments, use the `-format` flag followed by a Go template string. For example, to see all of the comments, use the following command:
+
+```bash
+todos -format "{{range .}}{{ .File}}\n  Line: {{.Line}}\n  Text: {{.Text}}\n  Author: {{- .Author}}\n\n{{end}}"
+```
+
+To use a template file, use the following command:
+
+```bash
+todos -format "$(cat some.template)"
 ```
 
 ### Validate Max
