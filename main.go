@@ -17,6 +17,7 @@ func main() {
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
 	outputStyle := flag.String("output", "group", "Output style (table, group, json, md)")
+	format := flag.String("format", "", "Go template string to use for output style (-output will be ignored if format is set)")
 	flag.Parse()
 
 	dir := flag.Arg(0)
@@ -68,6 +69,10 @@ func main() {
 		sortDesc = true
 	}
 
+	if *format != "" {
+		*outputStyle = "format"
+	}
+
 	// Output the comments
 	var outputErr error
 	switch *outputStyle {
@@ -79,6 +84,8 @@ func main() {
 		outputErr = todos.WriteJSON(os.Stdout, comments, *sortBy, sortDesc)
 	case "md":
 		outputErr = todos.WriteMarkdown(os.Stdout, comments, *sortBy, sortDesc)
+	case "format":
+		outputErr = todos.WriteTemplate(os.Stdout, comments, *sortBy, sortDesc, *format)
 	default:
 		outputErr = todos.WriteTable(os.Stdout, comments, *sortBy, sortDesc)
 	}

@@ -3,9 +3,11 @@ package todos
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -19,7 +21,7 @@ func WriteFileGroup(w io.Writer, comments []Comment, sortby string, desc bool) e
 
 	fileGroups := make(map[string][]Comment)
 	for _, comment := range comments {
-		fileGroups[comment.FilePath] = append(fileGroups[comment.FilePath], comment)
+		fileGroups[comment.File] = append(fileGroups[comment.File], comment)
 	}
 	keys := make([]string, 0, len(fileGroups))
 	sort.Strings(keys)
@@ -32,7 +34,7 @@ func WriteFileGroup(w io.Writer, comments []Comment, sortby string, desc bool) e
 				case "author":
 					return comments[i].Author < comments[j].Author
 				case "file":
-					return comments[i].FilePath < comments[j].FilePath
+					return comments[i].File < comments[j].File
 				case "line":
 					return comments[i].Line < comments[j].Line
 				case "type":
@@ -40,7 +42,7 @@ func WriteFileGroup(w io.Writer, comments []Comment, sortby string, desc bool) e
 				case "text":
 					return comments[i].Text < comments[j].Text
 				default:
-					return comments[i].FilePath < comments[j].FilePath
+					return comments[i].File < comments[j].File
 				}
 			})
 
@@ -99,7 +101,7 @@ func WriteTable(w io.Writer, comments []Comment, sortby string, desc bool) error
 	tabW := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
 	for _, comment := range comments {
-		commentString := fmt.Sprintf("%s\t%s\t%s:%d\t%s", comment.Author, comment.Type, comment.FilePath, comment.Line, comment.Text)
+		commentString := fmt.Sprintf("%s\t%s\t%s:%d\t%s", comment.Author, comment.Type, comment.File, comment.Line, comment.Text)
 		fmt.Fprintln(tabW, commentString)
 	}
 
@@ -114,16 +116,33 @@ func WriteMarkdown(w io.Writer, comments []Comment, sortby string, desc bool) er
 
 	sortComments(comments, sortby, desc)
 
-	fmt.Println("## TODOs")
-	fmt.Println("")
-	fmt.Println("| Author | Type | File:Line | Text |")
+	fmt.Println("| Type | Author | File:Line | Text |")
 	fmt.Println("| --- | --- | --- | --- |")
 
 	for _, comment := range comments {
-		fmt.Printf("| %s | %s | %s:%d | %s |\n", comment.Author, comment.Type, comment.FilePath, comment.Line, comment.Text)
+		fmt.Printf("| %s | %s | %s | %s:%d |\n", comment.Type, comment.Author, comment.Text, comment.File, comment.Line)
 	}
 
 	return nil
+}
+
+// WriteTemplate writes the comments to the io.Writer using the given template
+func WriteTemplate(w io.Writer, comments []Comment, sortby string, desc bool, sourceStr string) error {
+	if len(comments) == 0 {
+		return nil
+	}
+
+	sortComments(comments, sortby, desc)
+
+	sourceStr = strings.Replace(sourceStr, `\n`, "\n", -1)
+	sourceStr = strings.Replace(sourceStr, `\t`, "\t", -1)
+
+	t, err := template.New("comments").Parse(sourceStr)
+	if err != nil {
+		return err
+	}
+
+	return t.Execute(w, comments)
 }
 
 // sortComments sorts the comments by the given sortby string and
@@ -134,7 +153,7 @@ func sortComments(comments []Comment, sortby string, desc bool) {
 		case "author":
 			return comments[i].Author < comments[j].Author
 		case "file":
-			return comments[i].FilePath < comments[j].FilePath
+			return comments[i].File < comments[j].File
 		case "line":
 			return comments[i].Line < comments[j].Line
 		case "type":
@@ -142,7 +161,7 @@ func sortComments(comments []Comment, sortby string, desc bool) {
 		case "text":
 			return comments[i].Text < comments[j].Text
 		default:
-			return comments[i].FilePath < comments[j].FilePath
+			return comments[i].File < comments[j].File
 		}
 	})
 
