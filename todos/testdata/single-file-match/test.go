@@ -12,4 +12,7 @@ func main() {
 	*/
 
 	// TODO(user): do something
+
+	// TODO this isn't the right way to do this
+	// TODO (user) this is a todo
 }
