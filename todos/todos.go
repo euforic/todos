@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/euforic/todos/pkg/gitignore"
 )
@@ -25,7 +26,8 @@ type Comment struct {
 func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
 	searchHidden, ignores := removeHiddenIgnore(ignores)
 
-	comments := []Comment{}
+	commentsChan := make(chan []Comment)
+	var wg sync.WaitGroup
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if info == nil {
@@ -43,29 +45,46 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			return nil
 		}
 
-		// Open the file and search for comments
-		file, openErr := os.Open(path)
-		if openErr != nil {
-			// Ignore directories that can't be opened
-			if os.IsPermission(openErr) || os.IsNotExist(openErr) {
-				return nil
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			// Open the file and search for comments
+			file, openErr := os.Open(path)
+			if openErr != nil {
+				// Ignore directories that can't be opened
+				if os.IsPermission(openErr) || os.IsNotExist(openErr) {
+					return
+				}
+				commentsChan <- []Comment{}
+				return
 			}
-			return openErr
-		}
-		defer file.Close()
+			defer file.Close()
 
-		fileComments, parseErr := Parse(file, path, commentTypes)
-		if parseErr != nil {
-			return parseErr
-		}
+			fileComments, parseErr := Parse(file, path, commentTypes)
+			if parseErr != nil {
+				commentsChan <- []Comment{}
+				return
+			}
 
-		comments = append(comments, fileComments...)
+			commentsChan <- fileComments
+		}()
 
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	go func() {
+		wg.Wait()
+		close(commentsChan)
+	}()
+
+	comments := []Comment{}
+	for fileComments := range commentsChan {
+		comments = append(comments, fileComments...)
 	}
 
 	return comments, nil
