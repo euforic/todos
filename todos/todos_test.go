@@ -1,11 +1,11 @@
 package todos_test
 
 import (
-	"encoding/json"
-	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/euforic/todos/todos"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestSearch(t *testing.T) {
@@ -155,20 +155,34 @@ func TestSearch(t *testing.T) {
 		},
 	}
 
+	t.Parallel()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Search for comments using the temporary .gitignore file
 			got, err := todos.Search(tt.dir, tt.commentType, tt.ignores)
+
+			sort.Slice(tt.want, func(i, j int) bool {
+				if tt.want[i].File == tt.want[j].File {
+					return tt.want[i].Line < tt.want[j].Line
+				}
+				return tt.want[i].File < tt.want[j].File
+			})
+
+			sort.Slice(got, func(i, j int) bool {
+				if got[i].File == got[j].File {
+					return got[i].Line < got[j].Line
+				}
+				return got[i].File < got[j].File
+			})
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			// Convert both 'got' and 'want' to JSON, then compare
-			gotJSON, _ := json.MarshalIndent(got, "", "  ")
-			wantJSON, _ := json.MarshalIndent(tt.want, "", "  ")
-			if !reflect.DeepEqual(gotJSON, wantJSON) {
-				t.Errorf("Search() got = %v, want %v", string(gotJSON), string(wantJSON))
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("Search() \n%s", cmp.Diff(got, tt.want))
 			}
 		})
 	}
