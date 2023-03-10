@@ -23,7 +23,7 @@ type Comment struct {
 }
 
 // Search searches a directory for comments
-func Search(dir string, commentTypes []string, ignores []string) ([]Comment, error) {
+func Search(dir string, commentTypes []string, ignores []string, permissive bool) ([]Comment, error) {
 	searchHidden, ignores := removeHiddenIgnore(ignores)
 
 	commentsChan := make(chan []Comment)
@@ -61,7 +61,7 @@ func Search(dir string, commentTypes []string, ignores []string) ([]Comment, err
 			}
 			defer file.Close()
 
-			fileComments, parseErr := Parse(file, path, commentTypes)
+			fileComments, parseErr := Parse(file, path, commentTypes, permissive)
 			if parseErr != nil {
 				commentsChan <- []Comment{}
 				return
@@ -127,9 +127,14 @@ func shouldIgnoreFile(info os.FileInfo, ignores []string, path string, searchHid
 }
 
 // Parse parses the specified file and returns a slice of comments.
-func Parse(r io.Reader, path string, commentTypes []string) ([]Comment, error) {
+func Parse(r io.Reader, path string, commentTypes []string, permissive bool) ([]Comment, error) {
+	search := `(?i)\s*(%s)\s*(?:\(([\w.-]+)\))?\s*:\s*(.*)`
+	if permissive {
+		search = `(?i)\s*(%s)\s*(?:\(([\w.-]+)\))?(?::|\s*)(.*)`
+	}
+
 	// Define regular expression to match the specified comment types
-	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)\s*(?:\(([\w.-]+)\))?(?::|\s*)(.*)`, strings.Join(commentTypes, "|")))
+	commentRegex := regexp.MustCompile(fmt.Sprintf(search, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	var comments []Comment

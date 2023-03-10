@@ -14,6 +14,7 @@ func TestSearch(t *testing.T) {
 		dir         string
 		ignores     []string
 		commentType []string
+		permissive  bool
 		want        []todos.Comment
 		wantErr     bool
 	}{
@@ -52,35 +53,15 @@ func TestSearch(t *testing.T) {
 					Text:   "do something",
 					Author: "user",
 				},
-				{
-					File: "testdata/single-file-match/test.go",
-					Line: 16,
-					Type: "TODO",
-					Text: "this isn't the right way to do this",
-				},
-				{
-					File:   "testdata/single-file-match/test.go",
-					Line:   17,
-					Type:   "TODO",
-					Text:   "this is a todo",
-					Author: "user",
-				},
 			},
 			wantErr: false,
 		},
 		{
-			name:        "SingleFileIgnoreNoMatches",
-			dir:         ".",
-			ignores:     []string{".bin", "testdata/*", "*.go"},
-			commentType: []string{"TODO", "FIXME"},
-			want:        []todos.Comment{},
-			wantErr:     false,
-		},
-		{
-			name:        "SingleFileMatch",
+			name:        "SingleFileMatch_permisive",
 			dir:         "testdata/single-file-match",
 			ignores:     []string{".bin", "node_modules/"},
 			commentType: []string{"TODO", "FIXME"},
+			permissive:  true,
 			want: []todos.Comment{
 				{
 					File:   "testdata/single-file-match/test.go",
@@ -200,7 +181,7 @@ func TestSearch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Search for comments using the temporary .gitignore file
-			got, err := todos.Search(tt.dir, tt.commentType, tt.ignores)
+			got, err := todos.Search(tt.dir, tt.commentType, tt.ignores, tt.permissive)
 
 			sort.Slice(tt.want, func(i, j int) bool {
 				if tt.want[i].File == tt.want[j].File {

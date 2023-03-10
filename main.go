@@ -15,9 +15,11 @@ func main() {
 	sortBy := flag.String("sortby", "", "Sort results by field (author, file, line, type, text) to sort descending, postfix with ':desc' (e.g. author:desc)")
 	commentTypesStr := flag.String("types", "TODO,FIXME", "Comma-separated list of comment types to search for")
 	searchHidden := flag.Bool("hidden", false, "Search hidden files and directories")
+	permissive := flag.Bool("permissive", false, "Permissive mode (looser regex, but can match more than intended, strict format is 'TYPE(author): text' where author is optional)")
 	validateMax := flag.Int("validate-max", 0, "Validate that the number of comments is less than or equal to the max")
 	outputStyle := flag.String("output", "table", "Output style (table, group, json, md)")
 	format := flag.String("format", "", "Go template string to use for output style (-output will be ignored if format is set)")
+	noGitingore := flag.Bool("no-gitignore", false, "Ignore .gitignore file")
 	flag.Parse()
 
 	dir := flag.Arg(0)
@@ -27,9 +29,18 @@ func main() {
 
 	ignoreList := parseIgnoreList(ignores, searchHidden, dir)
 
+	if !*noGitingore {
+		ignorePatterns, err := todos.ParseGitignore(dir)
+		if err != nil && !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+			os.Exit(1)
+		}
+		ignoreList = append(ignoreList, ignorePatterns...)
+	}
+
 	commentTypes := strings.Split(*commentTypesStr, ",")
 
-	comments, err := todos.Search(dir, commentTypes, ignoreList)
+	comments, err := todos.Search(dir, commentTypes, ignoreList, *permissive)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)
@@ -60,13 +71,6 @@ func parseIgnoreList(ignores *string, searchHidden *bool, dir string) []string {
 		ignoreList = append(ignoreList, ".*")
 	}
 
-	ignorePatterns, err := todos.ParseGitignore(dir)
-	if err != nil && !os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	ignoreList = append(ignoreList, ignorePatterns...)
 	return ignoreList
 }
 
