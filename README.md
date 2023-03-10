@@ -20,7 +20,9 @@ The program accepts the following command-line arguments:
 - `-output`: Output style (table, file, json). Default: table
 - `-types`: A comma-separated list of comment types to search for. The default is "TODO,FIXME".
 - `-hidden`: Search hidden files and directories.
+- `-permissive`: Permissive mode (looser regex, but can match more than intended, strict format is 'TYPE(author): text' where author is optional)
 - `-format`: Uses the provide go template to output the result
+- `-no-gitignore`: Ignore .gitignore file
 - `-validate-max`: Validate that the number of comments is less than or equal to the max.
 
 ## Install
