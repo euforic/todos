@@ -129,7 +129,7 @@ func shouldIgnoreFile(info os.FileInfo, ignores []string, path string, searchHid
 // Parse parses the specified file and returns a slice of comments.
 func Parse(r io.Reader, path string, commentTypes []string) ([]Comment, error) {
 	// Define regular expression to match the specified comment types
-	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)(?:\(([\w.-]+)\))?:\s*(.*)`, strings.Join(commentTypes, "|")))
+	commentRegex := regexp.MustCompile(fmt.Sprintf(`(?i)\s*(%s)\s*(?:\(([\w.-]+)\))?\s*:\s*(.*)`, strings.Join(commentTypes, "|")))
 
 	// Create a slice to hold the comments
 	var comments []Comment
